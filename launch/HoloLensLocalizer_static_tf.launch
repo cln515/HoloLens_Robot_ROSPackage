@@ -1,0 +1,20 @@
+<launch>
+  <master auto="start"/>
+  <arg name="hololens_ip" default="10.105.90.205" />  
+  <arg name="holo_linked_frame" default="Head" />  
+  <arg name="robot_odom_frame" default="odom" />    
+  <arg name="robot_foot_frame" default="base_link" />
+
+  <arg name="x" default="0" />
+  <arg name="y" default="0" />
+  <arg name="z" default="0" />
+  <arg name="rx" default="0" />
+  <arg name="ry" default="0" />
+  <arg name="rz" default="0" />
+
+  <node name="holoposition_publisher" pkg="hololens_localizer" type="hololens_localizer" args="$(arg hololens_ip)"  output="screen"/>
+  <node name="hololens_mic" pkg="hololens_localizer" type="holomic.py" args="$(arg hololens_ip)" />
+  <node name="HoloLens_tf_Publisher" pkg="tf" type="static_transform_publisher" output="screen" args="$(arg x) $(arg y) $(arg z) $(arg rx) $(arg ry) $(arg rz) $(arg holo_linked_frame) \hololens_p 100"/>
+  <node name="posPublisher" pkg="hololens_localizer" type="init_pos_publisher_with_calib.py" args="$(arg robot_foot_frame)" output="screen"/>
+
+</launch>

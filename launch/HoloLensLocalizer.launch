@@ -1,0 +1,13 @@
+<launch>
+  <master auto="start"/>
+  <arg name="hololens_ip" default="192.168.0.60" />  
+  <arg name="holo_linked_frame" default="Head" />  
+  <arg name="robot_odom_frame" default="odom" />    
+  <arg name="robot_foot_frame" default="base_link" />
+  <arg name="calib_file_path" default="" />
+  <node name="holoposition_publisher" pkg="hololens_localizer" type="hololens_localizer" args="$(arg hololens_ip)"  output="screen"/>
+  <node name="hololens_mic" pkg="hololens_localizer" type="holomic.py" args="$(arg hololens_ip)" />
+  <node name="pepper2holo_calib" pkg="hololens_localizer" type="robot2holo_calib_2d" output="screen" args="$(arg robot_odom_frame) $(arg holo_linked_frame) $(arg robot_foot_frame) $(arg calib_file_path)"  launch-prefix="xterm -e"/>
+  <node name="posPublisher" pkg="hololens_localizer" type="init_pos_publisher_with_calib.py" args="$(arg robot_foot_frame)" output="screen"/>
+
+</launch>
