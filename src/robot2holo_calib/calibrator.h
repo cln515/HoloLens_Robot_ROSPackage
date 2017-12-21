@@ -12,6 +12,8 @@
 #include <iostream>
 #include<fstream>
 #include "teleop.h"
+#include <sys/ioctl.h>
+#include <termios.h>
 #include "nonlinear_solver.h"
 #include "ceres/ceres.h"
 #include "glog/logging.h"
@@ -80,12 +82,29 @@ private:
 		newt.c_lflag &= ~(ICANON);                 // disable buffering      
 		tcsetattr( STDIN_FILENO, TCSANOW, &newt);  // apply new settings
 
-		int c = getchar();  // read character (non-blocking)
+		int c = getchar();  // read character
 
 		tcsetattr( STDIN_FILENO, TCSANOW, &oldt);  // restore old settings
 		return c;
 	}
 
+		bool kbhit()
+	{
+		termios term;
+		tcgetattr(0, &term);
+
+		termios term2 = term;
+		term2.c_lflag &= ~ICANON;
+		tcsetattr(0, TCSANOW, &term2);
+
+		int byteswaiting;
+		ioctl(0, FIONREAD, &byteswaiting);
+
+		tcsetattr(0, TCSANOW, &term);
+
+		return byteswaiting > 0;
+	}
+	
 	Matrix4d btTrans2EigMat4d(tf::Transform t){
 		tf::Matrix3x3 btm(t.getRotation());
 		Matrix4d m;

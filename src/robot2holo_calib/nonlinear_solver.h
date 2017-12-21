@@ -20,7 +20,6 @@ struct CostFunctor {
   }
 };
 
-int test_solve();
 
 
 //e=|AX-XB|
