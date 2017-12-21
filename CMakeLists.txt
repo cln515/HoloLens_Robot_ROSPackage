@@ -37,10 +37,10 @@ target_link_libraries(hololens_robot_navigation
 )
 
 add_executable(robot2holo_calibration
-	src/robot2holo_calib2d/main.cpp
-	src/robot2holo_calib2d/teleop.cpp
-	src/robot2holo_calib2d/calibrator.cpp
-	src/robot2holo_calib2d/nonlinear_solver.cpp
+	src/robot2holo_calib/main.cpp
+	src/robot2holo_calib/teleop.cpp
+	src/robot2holo_calib/calibrator.cpp
+	src/robot2holo_calib/nonlinear_solver.cpp
 )
 target_link_libraries(robot2holo_calibration
   ${catkin_LIBRARIES}
