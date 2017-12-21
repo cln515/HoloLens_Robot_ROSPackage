@@ -112,7 +112,7 @@ if __name__ == '__main__':
 			adjustMatrixB[0][3]=0
 			adjustMatrixB[1][3]=0
 			adjustMatrixB[2][3]=0
-			print adjustMatrixB
+			#print adjustMatrixB
 			#print adjustMatrixA
 			#print adjustMatrixB
 			map2foot=np.dot(np.dot(map2holo,adjustMatrixB),holo2foot)
