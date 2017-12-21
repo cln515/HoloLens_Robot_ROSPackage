@@ -39,8 +39,8 @@ private:
 	void transition_log(std::vector<tf::StampedTransform> pep_pos, std::vector<tf::StampedTransform> hol_pos,std::ofstream& ofs);	
 	void linear_calibration(std::vector<tf::StampedTransform> pep_pos, std::vector<tf::StampedTransform> hol_pos, Matrix3d& R, Vector3d& T);
 	void nonlinear_calibration(std::vector<tf::StampedTransform> pep_pos, std::vector<tf::StampedTransform> hol_pos, Matrix3d& R, Vector3d& T);	
-	void horizontal_initialization(std::vector<tf::StampedTransform> pep_pos, std::vector<tf::StampedTransform> hol_pos, std::vector<Eigen::Vector3d> verticalVecs, std::vector<Eigen::Vector3d> normVecs, Matrix3d& R, Vector3d& T);
-	void nonlinear_horizontal_calibration(std::vector<tf::StampedTransform> pep_pos, std::vector<tf::StampedTransform> hol_pos, std::vector<Eigen::Vector3d> verticalVecs, std::vector<Eigen::Vector3d> normVecs, Matrix3d& R, Vector3d& T);
+	void horizontal_initialization(std::vector<tf::StampedTransform> pep_pos, std::vector<tf::StampedTransform> hol_pos, std::vector<Eigen::Vector3d> verticalVecs, std::vector<Eigen::Vector3d> normVecs, Matrix3d& R, Vector3d& T, double* bestScores);
+	void nonlinear_horizontal_calibration(std::vector<tf::StampedTransform> pep_pos, std::vector<tf::StampedTransform> hol_pos, std::vector<Eigen::Vector3d> verticalVecs, std::vector<Eigen::Vector3d> normVecs, Matrix3d& R, Vector3d& T, double* bestScores);
 	void poseStampedCB(const geometry_msgs::PoseStamped::ConstPtr& msg);
 	
 	std::vector<tf::StampedTransform> pep_pos;

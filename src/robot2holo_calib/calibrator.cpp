@@ -215,9 +215,10 @@ void calibrator::calibration(std::vector<tf::StampedTransform> pep_pos, std::vec
 	nonlinear_calibration(pep_pos,hol_pos,R,T);
 }
 void calibrator::horizontalCalibration(std::vector<tf::StampedTransform> pep_pos, std::vector<tf::StampedTransform> hol_pos, std::vector<Eigen::Vector3d> floor_holo, std::vector<Eigen::Vector3d> head_foot, Matrix3d& R, Vector3d& T){
-	horizontal_initialization(pep_pos,hol_pos,floor_holo,head_foot,R,T);
+	double bestScores[2];
+	horizontal_initialization(pep_pos,hol_pos,floor_holo,head_foot,R,T,bestScores);
 	std::cout<<"========finished initial parameter computation========"<<std::endl;
-	nonlinear_horizontal_calibration(pep_pos,hol_pos,floor_holo,head_foot,R,T);
+	nonlinear_horizontal_calibration(pep_pos,hol_pos,floor_holo,head_foot,R,T,bestScores);
 }
 void calibrator::linear_calibration(std::vector<tf::StampedTransform> pep_pos, std::vector<tf::StampedTransform> hol_pos, Matrix3d& R, Vector3d& T){
 		std::vector<Matrix4d> pepMat,pepdMat;   
@@ -313,7 +314,7 @@ void calibrator::nonlinear_calibration(std::vector<tf::StampedTransform> pep_pos
 	T<<opt[0],opt[1],opt[2];
 }
 
-void calibrator::horizontal_initialization(std::vector<tf::StampedTransform> pep_pos, std::vector<tf::StampedTransform> hol_pos, std::vector<Eigen::Vector3d> verticalVecs, std::vector<Eigen::Vector3d> normVecs, Matrix3d& R, Vector3d& T){
+void calibrator::horizontal_initialization(std::vector<tf::StampedTransform> pep_pos, std::vector<tf::StampedTransform> hol_pos, std::vector<Eigen::Vector3d> verticalVecs, std::vector<Eigen::Vector3d> normVecs, Matrix3d& R, Vector3d& T, double* bestScores){
 		std::vector<Matrix4d> pepMat,pepdMat;   
 		std::vector<Matrix4d> holMat,holdMat;
 		for(int i=0;i<pep_pos.size();i++){
@@ -322,8 +323,8 @@ void calibrator::horizontal_initialization(std::vector<tf::StampedTransform> pep
 			pepMat.push_back(mp);
 			holMat.push_back(mh);
 			if(i>0){
-				pepdMat.push_back(pepMat.at(0).inverse()*pepMat.at(i));
-				holdMat.push_back(holMat.at(0).inverse()*holMat.at(i));
+				pepdMat.push_back(pepMat.at(i-1).inverse()*pepMat.at(i));
+				holdMat.push_back(holMat.at(i-1).inverse()*holMat.at(i));
 			}
 		}
 		//Rotation calibration
@@ -364,12 +365,15 @@ void calibrator::horizontal_initialization(std::vector<tf::StampedTransform> pep
 			Eigen::Vector3d head2foot=normVecs.at(i);
 			Eigen::Vector3d t_=floor2holo+Minv*head2foot;//in hololens flame
 			double alpha=t_.dot(floor2holo)/floor2holo.norm();
-			std::cout<<"head2foot\n"<<head2foot<<std::endl;
+			//std::cout<<"head2foot\n"<<head2foot<<std::endl;
 			
-			std::cout<<"t and alpha\n"<<t_<<std::endl;
-			std::cout<<alpha<<std::endl;
+			//std::cout<<"t and alpha\n"<<t_<<std::endl;
+			//std::cout<<alpha<<std::endl;
 			vert=vert+alpha*((1.0)/floor2holo.norm())*floor2holo;
 		}
+		
+		
+		
 		vert=((1.0)/verticalVecs.size())*vert;
 		
 		//calc lest parameters from RA*t+tA=R*tb+t
@@ -377,7 +381,7 @@ void calibrator::horizontal_initialization(std::vector<tf::StampedTransform> pep
 		//get good rotational parameter
 		double mscore=0;
 		int bestidx=-1;		
-		for(int i=pepMat.size()-1;i>=0;i--){
+		/*for(int i=pepMat.size()-1;i>=0;i--){
 			Matrix4d mp=btTrans2EigMat4d(pep_pos.at(pepMat.size()-1));
 			Matrix4d mh=btTrans2EigMat4d(hol_pos.at(holMat.size()-1));		
 			Matrix4d mp2=btTrans2EigMat4d(pep_pos.at(i));
@@ -395,19 +399,36 @@ void calibrator::horizontal_initialization(std::vector<tf::StampedTransform> pep
 				mscore=score;
 				bestidx=i;
 			}
+		}*/
+		double offset_trans=0.1;
+		double offset=0.01;		
+		for(int i=0;i<pepdMat.size();i++){
+			double anglea,angleb;
+			Vector3d pepax;mat2axis_angle(pepdMat.at(i),pepax,anglea);
+			Vector3d holax;mat2axis_angle(holdMat.at(i),holax,angleb);
+			Vector3d ta=pepdMat.at(i).block(0,3,3,1);
+			double score=(sqrt(ta.norm())-sqrt(offset_trans))/(fabs(anglea)+offset);
+			if(mscore<score){
+				mscore=score;
+				bestidx=i;
+			}
 		}
 		if(bestidx<0){
 			std::cout<<"initialization failed!! (need large rotaion)\nPlease check how to move..."<<std::endl;
 			return;			
 		}
+		bestScores[0]=mscore;
 		//non rotation (RA nearly I): RA*t+tA=R*tb+t --> t+tA=R*tb+t --> tA=R'*M*tb
-		Matrix4d mp_1=btTrans2EigMat4d(pep_pos.at(pepMat.size()-1));
-		Matrix4d mh_1=btTrans2EigMat4d(hol_pos.at(holMat.size()-1));		
-		Matrix4d mp_2=btTrans2EigMat4d(pep_pos.at(bestidx));
-		Matrix4d mh_2=btTrans2EigMat4d(hol_pos.at(bestidx));		
+		
+		//Matrix4d mp_1=btTrans2EigMat4d(pep_pos.at(pepMat.size()-1));
+		//Matrix4d mh_1=btTrans2EigMat4d(hol_pos.at(holMat.size()-1));		
+		//Matrix4d mp_2=btTrans2EigMat4d(pep_pos.at(bestidx));
+		//Matrix4d mh_2=btTrans2EigMat4d(hol_pos.at(bestidx));		
 		Matrix4d mh_3,mp_3;
-		mp_3=mp_2.inverse()*mp_1;
-		mh_3=mh_2.inverse()*mh_1;
+		//mp_3=mp_2.inverse()*mp_1;
+		//mh_3=mh_2.inverse()*mh_1;
+		mp_3=pepdMat.at(bestidx);
+		mh_3=holdMat.at(bestidx);
 		Vector3d ta_=mp_3.block(0,3,3,1);
 		Vector3d tb_=mh_3.block(0,3,3,1);
 		tb_=M*tb_;
@@ -428,16 +449,17 @@ void calibrator::horizontal_initialization(std::vector<tf::StampedTransform> pep
 		vert=R*vert;
 		
 		mscore=0;
-		double offset=0.01;
+
 		bestidx=-1;
+		double offset_angle=0.2;
 		for(int i=0;i<pepdMat.size();i++){
 			double anglea,angleb;
 			Vector3d pepax;mat2axis_angle(pepdMat.at(i),pepax,anglea);
 			Vector3d holax;mat2axis_angle(holdMat.at(i),holax,angleb);
-			if(fabs(anglea)<0.1)continue;
+			//if(fabs(anglea)<0.1)continue;
 			Vector3d ta=pepdMat.at(i).block(0,3,3,1);
 			Vector3d tb=holdMat.at(i).block(0,3,3,1);
-			double score=fabs(anglea)/(ta.norm()+offset);
+			double score=(sqrt(fabs(anglea))-sqrt(offset_angle))/(ta.norm()+offset);
 			if(mscore<score){
 				mscore=score;
 				bestidx=i;
@@ -447,6 +469,7 @@ void calibrator::horizontal_initialization(std::vector<tf::StampedTransform> pep
 			std::cout<<"initialization failed!! (need less rotaion)\nPlease check how to move..."<<std::endl;
 			return;			
 		}		
+		bestScores[1]=mscore;
 		//solve (I-RA)t=Rtb-tA
 		Vector3d robax=mat2axis(pepdMat.at(bestidx));
 		//xz plane, yzplane
@@ -486,7 +509,7 @@ void calibrator::horizontal_initialization(std::vector<tf::StampedTransform> pep
 
 }
 
-void calibrator::nonlinear_horizontal_calibration(std::vector<tf::StampedTransform> pep_pos, std::vector<tf::StampedTransform> hol_pos, std::vector<Eigen::Vector3d> floor_holo, std::vector<Eigen::Vector3d> head_foot, Matrix3d& R, Vector3d& T){
+void calibrator::nonlinear_horizontal_calibration(std::vector<tf::StampedTransform> pep_pos, std::vector<tf::StampedTransform> hol_pos, std::vector<Eigen::Vector3d> floor_holo, std::vector<Eigen::Vector3d> head_foot, Matrix3d& R, Vector3d& T, double* bestScores){
 	//decompose
 	double opt[6];
 	R2axisRot(R,opt[3],opt[4],opt[5]);
@@ -498,9 +521,12 @@ void calibrator::nonlinear_horizontal_calibration(std::vector<tf::StampedTransfo
 	
 	std::vector<Matrix4d> pepMat,pepdMat;   
 	std::vector<Matrix4d> holMat,holdMat;
+	double offset_trans=0.1;
+	double offset_angle=0.2;
+	double offset=0.01;
 	for(int i=1;i<pep_pos.size();i++){//rotation estimation by horizontal rotation 
-		Matrix4d mp=btTrans2EigMat4d(pep_pos.at(0));
-		Matrix4d mh=btTrans2EigMat4d(hol_pos.at(0));	
+		Matrix4d mp=btTrans2EigMat4d(pep_pos.at(i-1));
+		Matrix4d mh=btTrans2EigMat4d(hol_pos.at(i-1));	
 		Matrix4d mp2=btTrans2EigMat4d(pep_pos.at(i));
 		Matrix4d mh2=btTrans2EigMat4d(hol_pos.at(i));		
 		Matrix4d mh3,mp3;
@@ -510,17 +536,25 @@ void calibrator::nonlinear_horizontal_calibration(std::vector<tf::StampedTransfo
 		Vector3d pepax;mat2axis_angle(mp3,pepax,anglea);
 		Vector3d holax;mat2axis_angle(mh3,holax,angleb);
 		Vector3d ta=mp3.block(0,3,3,1);
-		double score=ta.norm();
-		if(fabs(anglea)>0.1){
+		Vector3d tb=mh3.block(0,3,3,1);		
+		double scorea=(sqrt(ta.norm())-sqrt(offset_trans))/(fabs(anglea)+offset);
+		double scoreb=(sqrt(fabs(anglea))-sqrt(offset_angle))/(ta.norm()+offset);
+		if(scoreb>=bestScores[1]*0.95){
 			CostFunction* cost_function1 = new NumericDiffCostFunction<F1,ceres::CENTRAL,1,6>(new F1(pepax,holax));
 			problem.AddResidualBlock(cost_function1, NULL, opt);		
-			if(score<0.1){
-				CostFunction* cost_function2 = new NumericDiffCostFunction<F2,ceres::CENTRAL,1,6>(new F2(mp3,mh3));
-				problem.AddResidualBlock(cost_function2, NULL, opt);
-			}	
+			CostFunction* cost_function2 = new NumericDiffCostFunction<F2,ceres::CENTRAL,1,6>(new F2(mp3,mh3));
+			problem.AddResidualBlock(cost_function2, NULL, opt);
+				
+		}
+		
+		if(scorea>=bestScores[0]*0.95){
+			Vector3d ta_n=ta.normalized();
+			Vector3d tb_n=tb.normalized();
+			CostFunction* cost_function1 = new NumericDiffCostFunction<F1,ceres::CENTRAL,1,6>(new F1(ta_n,tb_n));
+			problem.AddResidualBlock(cost_function1, NULL, opt);	
 		}
 	}
-	
+	/*
 	for(int i=pep_pos.size()-2;i>=0;i--){//direction
 		Matrix4d mp=btTrans2EigMat4d(pep_pos.at(pep_pos.size()-1));
 		Matrix4d mh=btTrans2EigMat4d(hol_pos.at(pep_pos.size()-1));		
@@ -542,7 +576,7 @@ void calibrator::nonlinear_horizontal_calibration(std::vector<tf::StampedTransfo
 			problem.AddResidualBlock(cost_function1, NULL, opt);	
 		}
 	}
-
+	*/
 	
 	for(int i=0;i<floor_holo.size();i++){
 		Eigen::Vector3d fh=floor_holo.at(i);
