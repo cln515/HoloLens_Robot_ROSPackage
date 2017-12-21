@@ -169,8 +169,10 @@ void calibrator::run()
             ofs.close();
             std::cout<<"file saved: "<<fpath<<std::endl;
         }else if(c=='d'){
-          pep_pos.pop_back();
-          hol_pos.pop_back();
+		if(pep_pos.size()>=1){
+			pep_pos.pop_back();
+			hol_pos.pop_back();
+		}
         }else if(c=='z'){
 	  std::ofstream ofs(fpath+".log");
 	  std::cout<<"Param R"<<std::endl;
