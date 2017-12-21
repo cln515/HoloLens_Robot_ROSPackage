@@ -25,7 +25,7 @@ if __name__ == '__main__':
 	#spawner = rospy.ServiceProxy('spawn', turtlesim.srv.Spawn)
 	#spawner(4, 2, 0, 'turtle2')
 	if len(sys.argv)<2:
-		print "usage:init_pos_publisher_with_calib.py <robot's foot flame name>"
+		print "usage:positionAdjuster.py <robot's foot flame name>"
 		exit()
 		
 	footprintFrame="/" + sys.argv[1]
