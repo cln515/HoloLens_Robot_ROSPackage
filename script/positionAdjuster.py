@@ -1,5 +1,12 @@
 #!/usr/bin/env python
 
+
+#Copyright (c) 2017 Ryoichi Ishikawa. All rights reserved.
+#
+#This software is released under the MIT License.
+#http://opensource.org/licenses/mit-license.php
+
+
 import rospy
 import socket
 import struct
@@ -21,9 +28,7 @@ if __name__ == '__main__':
 	rospy.init_node('init_pos_pub')
 	listener=tf.TransformListener()
 	adjuster=True
-	#rospy.wait_for_service('spawn')
-	#spawner = rospy.ServiceProxy('spawn', turtlesim.srv.Spawn)
-	#spawner(4, 2, 0, 'turtle2')
+
 	if len(sys.argv)<2:
 		print "usage:positionAdjuster.py <robot's foot flame name>"
 		exit()
