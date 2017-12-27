@@ -1,3 +1,11 @@
+/*
+Copyright (c) 2017 Ryoichi Ishikawa. All rights reserved.
+
+This software is released under the MIT License.
+http://opensource.org/licenses/mit-license.php
+*/
+
+
 #include "linearSolver.h"
 
 void linearCompute(std::vector<cv::Point2f> a,std::vector<cv::Point2f> b,Eigen::Matrix2d& R,Eigen::Vector2d& T){

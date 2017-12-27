@@ -1,3 +1,10 @@
+/*
+Copyright (c) 2017 Ryoichi Ishikawa. All rights reserved.
+
+This software is released under the MIT License.
+http://opensource.org/licenses/mit-license.php
+*/
+
 #include "calibrator.h"
 
 calibrator::calibrator(std::string holoLinkedFrame_, std::string odomFrame_, std::string robotFootFrame_)

@@ -1,3 +1,11 @@
+/*
+Copyright (c) 2017 Ryoichi Ishikawa. All rights reserved.
+
+This software is released under the MIT License.
+http://opensource.org/licenses/mit-license.php
+*/
+
+
 #include "ceres/ceres.h"
 #include "glog/logging.h"
 
