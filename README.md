@@ -5,7 +5,7 @@ HoloLens-ROS bridge and calibration tool package for robot navigation (ROS side)
 ## Description
 This is a package for robot navigation using two dimensional map. This package provides functions to calibrate the robot and HoloLens and to localize the robot on the map using SLAM function of the HoloLens 
 
-Paper(arXiv.com)
+Paper(http://arxiv.org/abs/1804.05178)
 
 ## Requirement
 Ceres solver(http://ceres-solver.org)
@@ -45,7 +45,7 @@ How to Calibrate
 	- Advancing the robot
 	- Press the space key and record the third position and pose
 
-Push ‚Äúc‚Äù key and calibration is performed.
+Push ìcî key and calibration is performed.
 
 Localization of Holo Lenz
 -Start RViz
